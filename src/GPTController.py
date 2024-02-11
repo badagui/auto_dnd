@@ -38,14 +38,12 @@ def preview_tokens_cost(messages, tools_prompt):
     return total_tokens
 
 def count_messages_tokens(messages):
-    print('counting msgs')
     encoding = tiktoken.get_encoding("cl100k_base")
     token_count = 0
     prefix_tokens = 3
     for message in messages:
         token_count += prefix_tokens
         for k, v in message.items():
-            print('adding tokens for ', v)
             if v == None: 
                 continue
             if k == 'tool_calls': 
