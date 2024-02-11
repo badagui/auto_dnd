@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto D&D</title>
+        <style>
+            body {
+                font-family: 'Courier New', Courier, monospace;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .panel {
+                border: 2px solid #000;
+                padding: 10px;
+                margin: 10px;
+            }
+            .topRow {
+                display: flex;
+                justify-content: center;
+                width: 840px;
+            }
+            #charSheet, #campaignNotes {
+                width: 100%;
+                height: 200px;
+                overflow: auto;
+                word-wrap: break-word;
+            }
+            #chat {
+                flex-grow: 2;
+                width: 800px;
+            }
+            #chatLog {
+                height: 400px;
+                overflow: auto;
+                border: 1px solid #ccc;
+                padding: 10px;
+                margin-bottom: 10px;
+                word-wrap: break-word;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            #messageInput {
+                width: calc(100% - 120px);
+            }
+            button {
+                width: 100px;
+                height: 20px;
+                line-height: 20px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+        <script>
+            window.onload = init;
+            const urlParams = new URLSearchParams(window.location.search);
+            var campaignId = urlParams.get('campaignId') || (Math.floor(Math.random() * 816874546561) + 12654864549).toString();
+            console.log('campaignId', campaignId)
+            
+            async function init() {
+                await sendMessage('[GET_SESSION_DATA]', 'process_input/');
+            }
+
+            async function sendButton() {
+                // get message and add to chat log
+                let message = document.getElementById("messageInput").value;
+                if (message == '') { return; }
+                if (message != ' ') { 
+                    let chatLogNewMsg = document.createElement("pre");
+                    chatLogNewMsg.textContent = `User: ${message}`;
+                    document.getElementById("chatLog").appendChild(chatLogNewMsg);
+                    document.getElementById("messageInput").value = '';
+                    // scroll to bottom
+                    document.getElementById("chatLog").scrollTop = chatLog.scrollHeight;
+                }
+                // send message
+                await sendMessage(message, 'process_input/');
+            }
+
+            async function sendMessage(message, endpoint) {
+                toggleInputs(false)
+                resp = await fetch(`http://127.0.0.1:8000/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        'campaign_id': campaignId,
+                        'content': message
+                    })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    setNewNotes("charSheetText", formatCharSheet(data.response.char_sheet));
+                    setNewNotes("campaignNotesText", formatCampaignNotes(data.response.campaign_notes));
+                    setNewMessages("chatLog", data.response.messages);
+
+                    // tool used mode
+                    if (data.response.messages.length > 0 && data.response.messages[data.response.messages.length - 1].role === 'tool'){
+                        let messageInput = document.getElementById("messageInput");
+                        let sendButton = document.querySelector("button");
+                        toggleInputs(true, "Continue...")
+                        messageInput.value = ' ';
+                        messageInput.disabled = true;
+                        messageInput.style.backgroundColor = "lightgray";
+                    } else {
+                        toggleInputs(true, "Send");
+                    }
+                }
+            }
+
+            function formatCharSheet(charSheet) {
+                charSheet = charSheet.replace("PLAYER CHARACTER SHEET:\n", '');
+                charSheet = charSheet.replace("name:", 'Name:');
+                charSheet = charSheet.replace("level", "Level");
+                charSheet = charSheet.replace("experience", "Experience");
+                charSheet = charSheet.replace("race", "Race");
+                charSheet = charSheet.replace("class", "Class");
+                charSheet = charSheet.replace("alignment", "Alignment");
+                charSheet = charSheet.replace("background", "Background");
+                return charSheet;
+            }
+
+            function formatCampaignNotes(campaignNotes) {
+                campaignNotes = campaignNotes.replace("GM CAMPAIGN NOTES:\n", '');
+                campaignNotes = campaignNotes.replace("[MAIN_LORE]", 'World Lore');
+                campaignNotes = campaignNotes.replace("[GEOGRAPHY_AND_CLIMATE]", 'Geography and Climate');
+                campaignNotes = campaignNotes.replace("[CITIES]", 'Cities');
+                campaignNotes = campaignNotes.replace("[FACTIONS]", 'Factions');
+                campaignNotes = campaignNotes.replace("[MAIN_STORYLINES]", 'Main Storylines');
+                campaignNotes = campaignNotes.replace("[SIDEQUESTS]", 'Sidequests');
+                campaignNotes = campaignNotes.replace("[NPCS]", 'NPCs');
+                campaignNotes = campaignNotes.replace("[POSSIBLE_ENDINGS]", 'Endings');
+                return campaignNotes
+            }
+
+            function setNewNotes(elementId, newNotes, title='') {
+                let textBox = document.getElementById(elementId);
+                textBox.innerHTML = '';
+                if (title) {
+                    let newTitle = document.createElement("strong");
+                    newTitle.textContent = title;
+                    textBox.appendChild(newTitle);
+                }
+                let newMsg = document.createElement("pre");
+                newMsg.textContent = newNotes;
+                textBox.appendChild(newMsg);
+            }
+
+            function setNewMessages(chatLogId, messages) {
+                let chatLog = document.getElementById(chatLogId);
+                chatLog.innerHTML = '';
+                for (let i = 0; i < messages.length; i++) {
+                    // skip assistant messages without content
+                    if (messages[i].role == "assistant" && messages[i].content == null) { continue; }
+                    // set message
+                    let chatLogNewMsg = document.createElement("pre");
+                    let prefix = messages[i].role == 'user' ? 'User:' : messages[i].role == 'assistant' ? 'GM:' : messages[i].role == 'tool' ? 'Tool:' : '';
+                    chatLogNewMsg.textContent = `${prefix} ${messages[i].content}`;
+                    // pick a color
+                    if (messages[i].role === 'user') {
+                        chatLogNewMsg.style.color = 'darkgreen';
+                    }
+                    else if (messages[i].role === 'tool') {
+                        chatLogNewMsg.style.color = 'sienna';
+                    }
+                    else if (messages[i].role === 'assistant') {
+                        chatLogNewMsg.style.color = 'darkblue';
+                    }
+                    // add message
+                    chatLog.appendChild(chatLogNewMsg);
+                    // scroll to bottom
+                    // chatLog.scrollTop = chatLog.scrollHeight;
+                }
+            }
+
+            function toggleInputs(enable, send_button_text="Send") {
+                let messageInput = document.getElementById("messageInput");
+                let sendButton = document.querySelector("button");
+
+                messageInput.disabled = !enable;
+                messageInput.style.backgroundColor = enable ? "" : "lightgray"; // default or gray
+
+                sendButton.disabled = !enable;
+                sendButton.style.backgroundColor = enable ? "" : "lightgray"; // default or gray
+
+                if (enable) {
+                    // set new button text
+                    let buttonText = document.getElementById('buttonText');
+                    buttonText.textContent = send_button_text;
+                }
+
+            }
+
+            // event listener for the input field to detect the enter key press
+            document.addEventListener("DOMContentLoaded", function() {
+                var input = document.getElementById("messageInput");
+                input.addEventListener("keypress", function(event) {
+                    if (event.keyCode === 13) {
+                        event.preventDefault();
+                        sendButton();
+                    }
+                });
+            });
+        </script>
+</head>
+<body>
+    <h1>Auto D&D</h1><br>
+    <div class="topRow">
+        <div id="charSheet" class="panel">
+            <strong>char sheet</strong>
+            <div id="charSheetText"></div>
+        </div>
+        <div id="campaignNotes" class="panel">
+            <strong>campaign notes</strong>
+            <div id="campaignNotesText"></div>
+        </div>
+    </div>
+    <div id="chat" class="panel">
+        <strong>chat</strong><br>
+        <div id="chatLog">
+        </div>
+        <input type="text" id="messageInput" placeholder="Type your message here">
+        <button onclick="sendButton()">
+            <span id="buttonText">Send</span>
+        </button>
+    </div>
+</body>
+</html>
