@@ -61,6 +61,7 @@ async def load_campaign(input: GetCampaignInput):
         
 @app.post("/create_character/")
 async def create_character(input: NewCharacterInput):
+    print('creating new character:', input)
     try:
         session = session_manager.get_or_create_session(input.campaign_id)
         session.set_char_sheet(input.name, input.background, 
@@ -69,6 +70,8 @@ async def create_character(input: NewCharacterInput):
         return {} # frontend behavior solely based on response.ok (status code 200)
     except Exception as e:
         print('exception create character', e)
+        print('input was', input)
+        print('session was', session)
         raise HTTPException(status_code=500, detail="Internal server error")
     
 @app.post("/process_input/")
@@ -82,7 +85,9 @@ async def process_input(input: UserInput):
         await session.get_gm_response(input.content, gpt_controller)
         return session.get_session_data()
     except Exception as e:
-        print('exception process input', e)
+        print('exception process_input', e)
+        print('input was', input)
+        print('session was', session)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/")
