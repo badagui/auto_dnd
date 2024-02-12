@@ -34,6 +34,10 @@ class SessionState():
         # update system prompt
         self.messages[0]["content"] = get_system_prompt(self.campaign_notes, self.player_char_sheet)
 
+        if self.BETA_limit_campaign():
+            limit_msg = {"role": "assistant", "content": "Alpha version limit reached (20+ messages). Start a new campaign to try it out again."}
+            self.messages.append(limit_msg)
+            return
         self.resume_transcript()
 
         # add response from LLM
@@ -68,6 +72,18 @@ class SessionState():
             }
         }
     
+    def BETA_limit_campaign(self):
+        # limit campaign to 20 messages in beta
+
+        # msg_count (ignoring tools)
+        msg_count = 0
+        for n in range(1, len(self.messages)):
+            if self.messages[n]['role'] == 'assistant' or self.messages[n]['role'] == 'user':
+                msg_count += 1
+        if msg_count >= 20:
+            return True
+        return False
+
     def resume_transcript(self):
         # if there are >=8 GM messages, mark gm_msg_5+1 as the new start_index. Next messages will be msg[0] (system) + msg[start_index:]
         # use llm to resume messages
