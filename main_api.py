@@ -1,4 +1,5 @@
-# to start api run python main_api.py
+# to run fastapi local server: python main_api.py
+# to run in production with multiple workers (linux): gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.main_api:app
 import uvicorn
 
 if __name__ == "__main__":
