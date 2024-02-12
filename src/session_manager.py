@@ -154,7 +154,6 @@ class SessionManager():
                 ],
                 user_turn=True
             )
-        print('returning session: ', self.sessions[session_id])
         return self.sessions[session_id]
 
     def check_session_exists(self, session_id: str):
