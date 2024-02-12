@@ -47,7 +47,6 @@ class SessionState():
         if 'tool_calls' in response_msg and response_msg['tool_calls'] is None:
             response_msg.pop('tool_calls')
 
-        print('converted to dict and removed function call: ', response_msg)
         self.messages.append(response_msg)
         
         # add tool result messages if any
@@ -143,7 +142,9 @@ class SessionManager():
         self.sessions: Dict[str, SessionState] = {}
 
     def get_or_create_session(self, session_id: str):
+        print('getting session with id: ', session_id)
         if session_id not in self.sessions:
+            print('session not found, creating new one')
             self.sessions[session_id] = SessionState(
                 player_char_sheet=PlayerCharSheet(),
                 campaign_notes=CampaignNotes(),
@@ -153,6 +154,7 @@ class SessionManager():
                 ],
                 user_turn=True
             )
+        print('returning session: ', self.sessions[session_id])
         return self.sessions[session_id]
 
     def check_session_exists(self, session_id: str):
