@@ -60,8 +60,12 @@
                 charisma: document.getElementById('charisma').value
             };
 
+            const req_url = 'http://localhost:8000/create_character' // local
+            // const req_url = 'https://auto-dnd-orpin.vercel.app:8000/create_character'
+            // const req_url = 'https://auto-dnd-e6db93336cd9.herokuapp.com/create_character'
+
             try {
-                const response = await fetch('http://localhost:8000/create_character', {
+                const response = await fetch(req_url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -96,14 +100,14 @@
         <input type="text" id="alignment" placeholder="neutral", value="neutral" disabled>
 
         <div class="input-group">
-            str <input type="number" id="strength" placeholder="10" disabled>
-            dex <input type="number" id="dexterity" placeholder="10" disabled>
-            con <input type="number" id="constitution" placeholder="10" disabled>
+            str <input type="number" id="strength" value="10" disabled>
+            dex <input type="number" id="dexterity" value="10" disabled>
+            con <input type="number" id="constitution" value="10" disabled>
         </div>
         <div class="input-group">
-            int <input type="number" id="intelligence" placeholder="10" disabled>
-            wis <input type="number" id="wisdom" placeholder="10" disabled>
-            cha <input type="number" id="charisma" placeholder="10" disabled>
+            int <input type="number" id="intelligence" value="10" disabled>
+            wis <input type="number" id="wisdom" value="10" disabled>
+            cha <input type="number" id="charisma" value="10" disabled>
         </div>
         <button onclick="rollAttributes()">Roll Attributes</button>
         <button onclick="submitCharacter()">Start Campaign</button>

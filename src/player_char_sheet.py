@@ -64,7 +64,13 @@ class PlayerCharSheet:
     def _get_items_desc(self):
         if not self.items:
             return "-"
-        return "\n".join([f"{details['quantity']} {item}: {details['description']}" for item, details in self.items.items()])
+        items_display = []
+        for item, details in self.items.items():
+            line = f"{details['quantity']} {item}"
+            if 'description' in details: # description is not mandatory
+                line += f" ({details['description']})"
+            items_display.append(line)
+        return "\n".join(items_display)
     
     def get_items_names(self):
         return [item for item in self.items]
