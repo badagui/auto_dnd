@@ -80,8 +80,9 @@
             }
 
             async function sendMessage(message, endpoint) {
-                // base_url = 'http://127.0.0.1:8000'
-                base_url = 'https://auto-dnd-orpin.vercel.app:8000'
+                // base_url = 'http://127.0.0.1:8000' # local
+                const base_url = 'https://auto-dnd-orpin.vercel.app:8000'
+                console.log(`sending message to ${base_url}/${endpoint}`)
                 toggleInputs(false)
                 resp = await fetch(`${base_url}/${endpoint}`, {
                     method: 'POST',
