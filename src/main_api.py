@@ -85,3 +85,6 @@ async def process_input(input: UserInput):
         print('exception process input', e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/")
+async def root():
+    return {"message": "Hello to Auto D&D!"}
