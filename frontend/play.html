@@ -3,6 +3,7 @@
 <head>
     <title>Auto D&D</title>
         <style>
+            
             body {
                 font-family: 'Courier New', Courier, monospace;
                 display: flex;
@@ -51,6 +52,29 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+            }
+            @media screen and (max-width: 768px) {
+                body {
+                    font-size: 18px;
+                }
+                .topRow, #chat {
+                    width: 100%;
+                    flex-direction: column;
+                }
+                #charSheet, #campaignNotes, #chat {
+                    width: auto;
+                }
+                #messageInput {
+                    width: calc(100% - 20px);
+                }
+                #messageInput, button {
+                    height: 40px;
+                    font-size: 18px;
+                }
+                button {
+                    padding: 0 10px;
+                    margin: 10px 0;
+                }
             }
         </style>
         <script>
