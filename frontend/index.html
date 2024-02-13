@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Auto D&D - Load Campaign</title>
     <style>
         body {
@@ -31,17 +32,22 @@
             width: 100%;
             margin-bottom: 10px;
         }
+        button {
+            padding: 0 10px;
+            margin: 10px 0;
+            height: 40px;
+            font-size: 16px;
+        }
         @media screen and (max-width: 768px) {
             body {
-                font-size: 18px;
+                font-size: 20px;
             }
-            #campaignId, button {
+            .panel {
+                width: auto;
+            }
+            #campaignId {
                 height: 40px;
-                font-size: 18px;
-            }
-            button {
-                padding: 0 10px;
-                margin: 10px 0;
+                font-size: 16px;
             }
         }
     </style>
