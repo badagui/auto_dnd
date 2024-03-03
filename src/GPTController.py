@@ -5,7 +5,8 @@ class GPTController:
     def __init__(self, api_key):
         self.client = AsyncOpenAI(api_key=api_key)
     
-    async def send_query(self, messages, tools_prompt):
+    async def send_query(self, messages, tools_prompt, tool_choice=None):
+        # model = "gpt-3.5-turbo-0125"
         model = "gpt-4-turbo-preview"
         pricing = {
             "gpt-3.5-turbo-0125": [0.0005, 0.0015],
@@ -18,6 +19,7 @@ class GPTController:
                 model = model,
                 messages=messages,
                 tools = tools_prompt,
+                tool_choice = tool_choice
             )
             print('completion id ', completion.id)
             print('usage ', completion.usage)
