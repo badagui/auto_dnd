@@ -1,15 +1,13 @@
 class CampaignNotes:
     def __init__(self):
-        self.world_overview = {
-            "main_lore": "-",
-            "geography_and_climate": "-",
-        }
+        self.campaign_name = "-"
+        self.geography_and_climate = "-"
+        self.world_lore = "-"
+        self.main_storyline = "-"
         self.cities = {}
         self.factions = {}
-        self.main_storylines = {}
         self.sidequests = {}
         self.npcs = {}
-        self.endings = {}
 
         # self.cities = {
         #     "Pendleton": ("Nestled in a gentle valley at the crossroads of ancient trade routes lies Pendleton, a bustling",
@@ -29,44 +27,46 @@ class CampaignNotes:
     def get_prompt(self):
         campaign_notes_prompt = (
             "GM CAMPAIGN NOTES:\n"
-            "[MAIN_LORE]: " + self.world_overview["main_lore"] + "\n"
-            "[GEOGRAPHY_AND_CLIMATE]: " + self.world_overview["geography_and_climate"] + "\n"
+            "[CAMPAIGN_NAME]: " + self.campaign_name + "\n"
+            "[GEOGRAPHY_AND_CLIMATE]: " + self.geography_and_climate + "\n"
+            "[WORLD_LORE]: " + self.world_lore + "\n"
+            "[MAIN_STORYLINE]: " + self.main_storyline + "\n"
             "[CITIES]:" + ("\n" if self.cities else " ") + self._get_descriptions(self.cities) + "\n"
             "[FACTIONS]:" + ("\n" if self.factions else " ") + self._get_descriptions(self.factions) + "\n"
-            "[MAIN_STORYLINES]:" + ("\n" if self.main_storylines else " ") + self._get_descriptions(self.main_storylines) + "\n"
             "[SIDEQUESTS]:" + ("\n" if self.sidequests else " ") + self._get_descriptions(self.sidequests) + "\n"
             "[NPCS]:" + ("\n" if self.npcs else " ") + self._get_descriptions(self.npcs) + "\n"
-            "[POSSIBLE_ENDINGS]:" + ("\n" if self.endings else " ") + self._get_descriptions(self.endings) + "\n"
         )
         return campaign_notes_prompt
 
-    def add_named_data(self, data_name, data_key, data_description):
-        try:
-            data = getattr(self, data_name)
-        except AttributeError:
-            return f"Invalid data name {data_name}."
-        #error if already exists
-        if data_key in data:
-            return f"Tried to add new data to {data_name} but {data_key} already exists."
-        data[data_key] = data_description
-        return f"Added new data to {data_name}: {data_key}."
-    
-    def update_named_data(self, data_name, data_key, new_data_description):
-        try:
-            data = getattr(self, data_name)
-        except AttributeError:
-            return f"Invalid data name {data_name}."
-        #error if not exists
-        if data_key not in data:
-            return f"Tried to update {data_key} in {data_name} but it does not exist."
-        data[data_key] = new_data_description
-        return f"Updated data {data_key}."
-    
-    def get_named_data_names(self, data_name):
-        try:
-            data = getattr(self, data_name)
-        except AttributeError:
-            print(f"Invalid data name {data_name}.")
-        return [data_key for data_key in data]
+    def create_new_geography_and_climate(self, name, description):
+        self.campaign_name = name
+        self.geography_and_climate = description
+        return f"Created {name} geography and climate."
 
+    def create_new_world_lore(self, description):
+        self.world_lore = description
+        return f"Created new world lore."
 
+    def create_new_main_storyline(self, description):
+        self.main_storyline = description
+        return f"Created new main storyline."
+    
+    def create_starting_city(self, name, description):
+        self.cities[name] = description
+        return f"Created new city {name}."
+    
+    def add_city(self, name, description):
+        self.cities[name] = description
+        return f"Added city {name}."
+
+    def add_faction(self, name, description):
+        self.factions[name] = description
+        return f"Added faction {name}."
+
+    def add_sidequest(self, name, description):
+        self.sidequests[name] = description
+        return f"Added sidequest {name}."
+
+    def add_npc(self, name, description):
+        self.npcs[name] = description
+        return f"Added NPC {name}."

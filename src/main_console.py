@@ -19,10 +19,10 @@ gpt_controller = GPTController(os.getenv('OPENAI_API_KEY'))
 session_manager = SessionManager()
 
 async def process_input(input: UserInput):
-    session = session_manager.get_or_create_session(input.user_id)
+    session = session_manager.create_session(input.user_id)
     if input.content == "[GET_SESSION_DATA]":
         return session.get_session_data()
-    await session.get_gm_response(input.content, gpt_controller)
+    await session.tick_session(input.content, gpt_controller)
     return session.get_session_data()
 
 def print_session_data_to_console(session_data):
@@ -47,7 +47,7 @@ def print_session_data_to_console(session_data):
             print(f"{message['role']}: {message['content']}")
 
 async def main():
-    session = session_manager.get_or_create_session('userId')
+    session = session_manager.create_session('userId')
     print_session_data_to_console(session.get_session_data())
     while True:
         system_ask = "user: " if session.user_turn else "press Enter to continue..."
