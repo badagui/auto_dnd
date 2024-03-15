@@ -41,7 +41,7 @@ class CampaignNotes:
     def create_new_geography_and_climate(self, name, description):
         self.campaign_name = name
         self.geography_and_climate = description
-        return f"Created {name} geography and climate."
+        return f"Created geography and climate."
 
     def create_new_world_lore(self, description):
         self.world_lore = description
@@ -53,19 +53,19 @@ class CampaignNotes:
     
     def create_starting_city(self, name, description):
         self.cities[name] = description
-        return f"Created new city {name}."
+        return f"Created new starting city: {name}."
     
     def add_city(self, name, description):
         self.cities[name] = description
-        return f"Added city {name}."
+        return f"Added city: {name}."
 
     def add_faction(self, name, description):
         self.factions[name] = description
-        return f"Added faction {name}."
+        return f"Added faction: {name}."
 
     def add_sidequest(self, name, description):
         self.sidequests[name] = description
-        return f"Added sidequest {name}."
+        return f"Added sidequest: {name}."
 
     def add_npc(self, name, description):
         self.npcs[name] = description

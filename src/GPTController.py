@@ -6,8 +6,8 @@ class GPTController:
         self.client = AsyncOpenAI(api_key=api_key)
     
     async def send_query(self, messages, tools_prompt, tool_choice=None):
-        # model = "gpt-3.5-turbo-0125"
-        model = "gpt-4-turbo-preview"
+        model = "gpt-3.5-turbo-0125"
+        # model = "gpt-4-turbo-preview"
         pricing = {
             "gpt-3.5-turbo-0125": [0.0005, 0.0015],
             "gpt-4-turbo-preview": [0.01, 0.03]
@@ -23,11 +23,27 @@ class GPTController:
             )
             print('completion id ', completion.id)
             print('usage ', completion.usage)
-            print('in cents ', completion.usage.prompt_tokens * price[0] / 1000 * 100)
-            print('out cents ', completion.usage.completion_tokens * price[1] / 1000 * 100)
-            return completion.choices[0].message
+            in_cents = completion.usage.prompt_tokens * price[0] / 1000 * 100
+            print('in cents ', in_cents)
+            out_cents = completion.usage.completion_tokens * price[1] / 1000 * 100
+            print('out cents ', out_cents)
+            return {'message': completion.choices[0].message, 'cost': in_cents + out_cents}
         except Exception as e:
-            print('exception send prompt', e)
+            print('exception send query', e)
+    
+    async def send_img_query(self, prompt):
+        price = 0.04 # per image
+        try:
+            response = await self.client.images.generate(
+                model = "dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            return {'url': response.data[0].url, 'cost': price}
+        except Exception as e:
+            print('exception send img query', e)
 
 def preview_tokens_cost(messages, tools_prompt):
     message_tokens = count_messages_tokens(messages)

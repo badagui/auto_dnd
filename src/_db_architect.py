@@ -1,8 +1,6 @@
 users = {
     'user_id': TABLE_ID,
     'uid': "",
-    'name': "",
-    'email': "", 
     'credits': 10000
 }
 
@@ -14,6 +12,16 @@ campaigns = {
     'world_lore': "",
     'main_storyline': "",
     'messages_start_index': 1
+}
+
+gen_story_imgs = {
+    'gen_img_id': TABLE_ID,
+    'campaign_id': fk_campaign_id,
+    'img_bytes': b'',
+    'prompt': "",
+    'model': "",
+    'cost': 0,
+    'campaign_message_id': 0
 }
 
 cities = {

@@ -3,20 +3,21 @@ from src.player_char_sheet import PlayerCharSheet
 from typing import Dict, List
 from src.session_state import SessionState
 
-# class UserData():
-#     def __init__(self, uid: str):
-#         # name, email, etc, are managed by firebase. We can fetch it using the uid.
-#         self.uid = uid
+class UserData():
+    def __init__(self, uid: str):
+        # auth data (name, email, etc) is managed by firebase
+        self.uid = uid
+        self.credits = 1000
     
-# class UserManager():
-#     def __init__(self):
-#         self.user_data: Dict[str, UserData] = {} 
+class UserManager():
+    def __init__(self):
+        self.user_data: Dict[str, UserData] = {} 
 
-#     def get_or_create_user_data(self, uid: str):
-#         if uid not in self.user_data:s
-#             print('creating new user data for:', uid)
-#             self.user_data[uid] = UserData(uid)
-#         return self.user_data[uid]
+    def get_or_create_user_data(self, uid: str):
+        if uid not in self.user_data:
+            print('creating new user data for:', uid)
+            self.user_data[uid] = UserData(uid)
+        return self.user_data[uid]
 
 class SessionManager():
     def __init__(self):

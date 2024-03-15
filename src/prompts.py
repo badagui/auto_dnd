@@ -4,7 +4,8 @@ from src.player_char_sheet import PlayerCharSheet
 def get_new_geography_and_climate_prompts():
     prompt = ("Create a description for the GEOGRAPHY AND CLIMATE section of a new Dungeons & Dragons world. "
               "This should be 40 words max. "
-              "Be creative, but balance innovation with tradition.")
+              "Be creative, but balance innovation with tradition. "
+              "Don't overuse magical elements.")
     messages = [
         {'role': 'system', 'content': 'You are a very experienced GM creating a D&D 3.5 campaign.'},
         {'role': 'user', 'content': prompt}
@@ -40,7 +41,8 @@ def get_new_world_lore_prompts(campaign_notes: CampaignNotes):
               "This could include history, mythology, cultural dynamics or other relevant information about the game world. "
               "Make sure it makes sense with your campaign notes and does not contradict it. "
               "This should be 50 words max. "
-              "Be creative, but balance innovation with tradition.\n")
+              "Be creative, but balance innovation with tradition. "
+              "Don't overuse magical elements.")
     prompt += campaign_notes.get_prompt()
     messages = [
         {'role': 'system', 'content': 'You are a very experienced GM creating a D&D 3.5 campaign.'},
@@ -76,7 +78,7 @@ def get_new_main_storyline_prompts(campaign_notes: CampaignNotes):
               "This should be 2 paragraphs, 80 words max. "
               "The first paragraph should focus on the storyline origins and current settings. "
               "The second paragraph should focus on the possible developments and resolutions, especially if the player does not act on it. "
-              "Be creative, but balance innovation with tradition.\n")
+              "Be creative, but balance innovation with tradition.")
     prompt += campaign_notes.get_prompt()
     messages = [
         {'role': 'system', 'content': 'You are a very experienced GM creating a D&D 3.5 campaign.'},
@@ -144,14 +146,13 @@ def get_new_starting_city_prompts(campaign_notes: CampaignNotes):
     tool_choice = {"type": "function", "function": {"name": "create_starting_city"}}
     return messages, tools, tool_choice
 
-def get_campaign_introduction_msgs(campaign_notes: CampaignNotes, player_char_sheet: PlayerCharSheet):
+def get_campaign_introduction_prompt(campaign_notes: CampaignNotes, player_char_sheet: PlayerCharSheet):
     # returns a system prompt, including base prompt, char sheet and campaign notes
     prompt = (
-        "You are a very experienced GM about to start a D&D 3.5 campaign and you will give the player an awesome introduction in 200 words max.\n"
+        "You are a very experienced GM about to start a D&D 3.5 campaign and you will give the player an awesome introduction in 150 words max.\n"
         "Tailor the introduction to the player character and campaign notes. "
         "The player starts in the city contained in the campaign notes. "
-        "After the introduction you will write one more paragraph telling the player where he is and suggesting some courses of action. "
-        "At last, let the player know he can choose one of your suggested actions or describe something entirely different. "
+        "After the introduction you will write an extra very small paragraph, telling the player where he is and suggesting some courses of action. Do not make a list, just say it casually, leaving openness for the player to describe something else."
     )
     prompt += campaign_notes.get_prompt() + player_char_sheet.get_prompt()
     messages = [
@@ -159,25 +160,26 @@ def get_campaign_introduction_msgs(campaign_notes: CampaignNotes, player_char_sh
     ]
     return messages
 
-def get_gm_response_prompts(campaign_notes: CampaignNotes, player_char_sheet: PlayerCharSheet):
+def get_gm_response_prompts(campaign_notes: CampaignNotes, player_char_sheet: PlayerCharSheet, summaries_prompt: str):
     # returns a system prompt, including base prompt, char sheet and campaign notes
     system_prompt = (
         "You are a very experienced GM managing a Dungeons & Dragons 3.5 campaign.\n"
 
-        "You will never simplify rules or game mechanics, and you will always follow the D&D 3.5 rules. "
-        "You will never assume the player did something without the player describing it. "
-        "Your responses are usually short and leave space for the player to act. Your response can be longer if describing a new scene. "
-        "If the player describes a forbidden or impossible action (because of the player character sheet, the world, the d&d 3.5 rules, etc), you will explain why that action is invalid. "
-        "You are very creative, but balance innovation with tradition. "
-        "You manage the campaign by having a main storyline that guide the story, and side quests that you create as needed. "
+        "Follow the D&D 3.5 rules and never simplify rules or game mechanics. "
+        "Never assume the player did something without the player describing it. "
+        "Write short responses and leave space for the player to act. "
+        "If the player describes a forbidden or impossible action, you will explain why that action is invalid. "
+        "Manage the campaign by having a main storyline that guide the story, and side quests that you create as needed. "
         "It is ultimately the players decision on what to do. "
         "You have tools to edit your notes about the campaign, keeping them up to date with the narrative. "
         "You have tools to edit the player character sheet, including changing stats, skills and items. "
         "You use the available tools as needed to keep track of the story and expand on it. "
         "You will ALWAYS use a tool to register important information as soon as possible. "
-        "You always review your notes and the transcription before answering to make sure your answer is correct and makes sense.\n"
+        "You always review your notes and the transcription before answering to make sure your answer is correct and makes sense. "
+        "Don't make make a list or suggest the player on what to do. Just describe the world around and leave the player free to take his action. "
     )
-    system_prompt += campaign_notes.get_prompt() + player_char_sheet.get_prompt()
+    
+    system_prompt += campaign_notes.get_prompt() + player_char_sheet.get_prompt() + summaries_prompt
     tools = _get_gm_tools()
     return system_prompt, tools
 
@@ -386,3 +388,34 @@ def _get_gm_tools():
         },
     ]
     return tools
+
+def get_summarizer_prompt(resume_msg: str):
+    prompt = (
+        "You are an experienced tabletop RPG GM assistant and it's your job to summarize parts of the session based on its transcription. \n"
+        "Summarize the given transcription in a short paragraph, without losing any important detail. "
+        "Don't use embelishments, just state the facts. This is not a creative writing task. "
+        "Write only the summary, nothing else. No commentaries or explanations. "
+    )
+    messages = [
+        {'role': 'system', 'content': prompt},
+        {'role': 'user', 'content': 'Transcription: ' + resume_msg}
+    ]
+    return messages
+
+def get_world_description_summary_prompt(campaign_notes: CampaignNotes):
+    prompt = (
+        "Summarize the given tabletop RPG world description in a very short paragraph. "
+        "Start by saying a greeting using the world name, ie: 'Welcome to the world of [WORLD_NAME].' or something similar. "
+        "Then, in a new line, write the short summary. "
+        "Write only what was asked, nothing else. No extra commentaries or explanations. "
+    )
+    messages = [
+        {'role': 'system', 'content': prompt},
+        {'role': 'user', 'content': 'World name: ' + campaign_notes.campaign_name + ' \nDescription: ' + campaign_notes.geography_and_climate + ' ' + campaign_notes.world_lore + ' ' + campaign_notes.main_storyline}
+    ]
+    return messages
+
+def get_image_world_creation_prompt(campaign_notes: CampaignNotes):
+    prompt = 'An wallpaper for a new dungeons and dragons world. Only the image, no titles, no texts, no characters. World description: ' + campaign_notes.geography_and_climate + ' ' + campaign_notes.world_lore
+    print('image prompt:\n', prompt)
+    return prompt

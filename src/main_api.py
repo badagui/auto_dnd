@@ -1,5 +1,6 @@
 # resumir chunks da transcrição
 
+import math
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +18,7 @@ firebase_app = firebase_admin.initialize_app(credentials.Certificate("firebase_c
 
 def auth_user_token(user_token):
     try:
-        decoded_token = auth.verify_id_token(user_token)
+        decoded_token = auth.verify_id_token(user_token, clock_skew_seconds=10)
         if decoded_token is None:
             print('Auth failed, could not decode token:', user_token)
         return decoded_token
@@ -68,7 +69,7 @@ app.add_middleware(
 
 gpt_controller = GPTController(os.getenv('OPENAI_API_KEY'))
 session_manager = SessionManager()
-# user_manager = UserManager()
+user_manager = UserManager()
 
 @app.post("/fetch_campaigns/")
 async def fetch_campaigns(input: FetchCampaignsInput):
@@ -79,7 +80,6 @@ async def fetch_campaigns(input: FetchCampaignsInput):
     try:
         # get user data
         print('fetching campaigns for:', decoded_token['uid'])
-        # user_data = user_manager.get_or_create_user_data(decoded_token['uid'])
         user_session_ids = session_manager.filter_sessions_by_owner(decoded_token['uid'])
         session_names = session_manager.get_session_names(user_session_ids)
         session_player_names = session_manager.get_session_player_names(user_session_ids)
@@ -92,7 +92,7 @@ async def fetch_campaigns(input: FetchCampaignsInput):
                 "player_name": session_player_names[i],
                 "player_Level": session_player_levels[i]
             })
-        return {"user_campaigns":  user_sessions_info}
+        return {"user_campaigns":  user_sessions_info, "maintenance_mode": False}
     except Exception as e:
         print('exception fetching user campaigns', e)
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -111,11 +111,12 @@ async def create_campaign(input: NewCampaignInput):
         session.set_char_sheet(input.character_data.name, input.character_data.background, 
                              input.character_data.strength, input.character_data.dexterity, input.character_data.constitution, 
                              input.character_data.intelligence, input.character_data.wisdom, input.character_data.charisma)
+        print('campaign_id:', campaign_id)
         return {'campaign_id': campaign_id}
     except Exception as e:
         print('exception create character', e)
-        # print('input was', input)
-        # print('session was', session)
+        print('input was', input)
+        print('session was', session)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/load_campaign/")
@@ -124,13 +125,14 @@ async def load_campaign(input: LoadCampaignInput):
     decoded_token = auth_user_token(input.user_token)
     if decoded_token is None: 
         return
+    user_data = user_manager.get_or_create_user_data(decoded_token['uid'])
     try:
         session = session_manager.get_session(input.campaign_id)
         if session is None:
-            print('load_campaign failed: campaign', input.campaign_id, 'does not exist')
+            print(f'user {decoded_token['uid']} request load_campaign failed: campaign_id {input.campaign_id} does not exist')
             return
         if session.owner != decoded_token['uid']:
-            print('load_campaign failed: user', decoded_token['uid'], 'does not have access to campaign', input.campaign_id)
+            print(f'user {decoded_token['uid']} request load_campaign failed: does not have access to campaign_id {input.campaign_id}')
             return
         print('sending session data for', decoded_token['uid'])
         return {
@@ -138,6 +140,8 @@ async def load_campaign(input: LoadCampaignInput):
             "char_sheet": session.player_char_sheet.get_prompt(),
             "campaign_notes": session.campaign_notes.get_prompt(),
             "is_user_turn": session.user_turn,
+            "credits": user_data.credits,
+            "campaign_intro_img_url": session.campaign_intro_img_url
         }
     except Exception as e:
         print('exception loading campaign', e)
@@ -149,25 +153,36 @@ async def process_input(input: UserInput):
     decoded_token = auth_user_token(input.user_token)
     if decoded_token is None:
         return
+    user_data = user_manager.get_or_create_user_data(decoded_token['uid'])
+    if user_data.credits < 0:
+        return {
+            "messages": session.messages[1:] + [{"role": "assistant", "content": "You don't have enough credits to play. Wait until tomorrow or buy more."}], # does not change the original messages
+            "char_sheet": session.player_char_sheet.get_prompt(),
+            "campaign_notes": session.campaign_notes.get_prompt(),
+            "is_user_turn": session.user_turn,
+            "credits": user_data.credits,
+            "campaign_intro_img_url": session.campaign_intro_img_url
+        }
     try:
         session = session_manager.get_session(input.campaign_id)
         if session is None:
-            print('load_campaign failed: campaign', input.campaign_id, 'does not exist')
+            print(f'user {decoded_token['uid']} request process_input failed: campaign_id {input.campaign_id} does not exist')
             return
         if session.owner != decoded_token['uid']:
-            print('load_campaign failed: user', decoded_token['uid'], 'does not have access to campaign', input.campaign_id)
+            print(f'user {decoded_token['uid']} request process_input failed: does not have access to campaign_id {input.campaign_id}')
             return
-        await session.tick_session(input.content, gpt_controller)
+        tick_resp = await session.tick_session(input.content, gpt_controller)
+        user_data.credits -= math.ceil(tick_resp['cost'] * 10) # cost in cents, 1000 credits == 1 USD
         return {
             "messages": session.messages[1:], # ignore system msg
             "char_sheet": session.player_char_sheet.get_prompt(),
             "campaign_notes": session.campaign_notes.get_prompt(),
             "is_user_turn": session.user_turn,
+            "credits": user_data.credits,
+            "campaign_intro_img_url": session.campaign_intro_img_url
         }
     except Exception as e:
         print('exception process_input', e)
-        print('input was', input)
-        print('session was', session)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/")
