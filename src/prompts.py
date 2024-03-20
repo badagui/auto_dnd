@@ -416,6 +416,5 @@ def get_world_description_summary_prompt(campaign_notes: CampaignNotes):
     return messages
 
 def get_image_world_creation_prompt(campaign_notes: CampaignNotes):
-    prompt = 'An wallpaper for a new dungeons and dragons world. Only the image, no titles, no texts, no characters. World description: ' + campaign_notes.geography_and_climate + ' ' + campaign_notes.world_lore
-    print('image prompt:\n', prompt)
+    prompt = 'An image representing a new dungeons and dragons world, given by the following world description: ' + campaign_notes.geography_and_climate + ' ' + campaign_notes.world_lore
     return prompt

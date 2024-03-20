@@ -1,4 +1,4 @@
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 import tiktoken
 
 class GPTController:
@@ -40,8 +40,31 @@ class GPTController:
                 size="1024x1024",
                 quality="standard",
                 n=1,
+                response_format='b64_json',
+                style='vivid' # vivid or natural
             )
-            return {'url': response.data[0].url, 'cost': price}
+            return {'b64_json': response.data[0].b64_json, 'cost': price, 'revised_prompt': response.data[0].revised_prompt}
+        except Exception as e:
+            print('exception send img query', e)
+
+class GPTController_sync:
+    def __init__(self, api_key):
+        self.client = OpenAI(api_key=api_key)
+    
+    def send_img_query(self, prompt):
+        price = 0.04 # per image
+        try:
+            response = self.client.images.generate(
+                model = "dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+                response_format='b64_json',
+                style='natural' # vivid or natural
+            )
+            # print('gpt image response:', response)
+            return {'b64_json': response.data[0].b64_json, 'cost': price, 'revised_prompt': response.data[0].revised_prompt}
         except Exception as e:
             print('exception send img query', e)
 

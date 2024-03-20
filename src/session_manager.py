@@ -3,21 +3,21 @@ from src.player_char_sheet import PlayerCharSheet
 from typing import Dict, List
 from src.session_state import SessionState
 
-class UserData():
-    def __init__(self, uid: str):
-        # auth data (name, email, etc) is managed by firebase
-        self.uid = uid
-        self.credits = 1000
+# class UserData():
+#     def __init__(self, uid: str):
+#         # auth data (name, email, etc) is managed by firebase
+#         self.uid = uid
+#         self.credits = 1000
     
-class UserManager():
-    def __init__(self):
-        self.user_data: Dict[str, UserData] = {} 
+# class UserManager():
+#     def __init__(self):
+#         self.user_data: Dict[str, UserData] = {} 
 
-    def get_or_create_user_data(self, uid: str):
-        if uid not in self.user_data:
-            print('creating new user data for:', uid)
-            self.user_data[uid] = UserData(uid)
-        return self.user_data[uid]
+#     def get_or_create_user_data(self, uid: str):
+#         if uid not in self.user_data:
+#             print('creating new user data for:', uid)
+#             self.user_data[uid] = UserData(uid)
+#         return self.user_data[uid]
 
 class SessionManager():
     def __init__(self):
@@ -36,7 +36,6 @@ class SessionManager():
             ],
             user_turn=True
         )
-        
         return session_id
     
     def filter_sessions_by_owner(self, owner_uid: str):
@@ -48,6 +47,7 @@ class SessionManager():
         
         return filtered_sessions
 
+    # this is being changed to db_manager.get_campaign(campaign_id)
     def get_session(self, session_id: str):
         if session_id not in self.sessions:
             print('session_id', session_id, 'not found')

@@ -1,7 +1,10 @@
+from PIL import Image
+import base64
+import io
 from src.campaign_notes import CampaignNotes
 from src.player_char_sheet import PlayerCharSheet
 from src.prompts import get_campaign_introduction_prompt, get_image_world_creation_prompt, get_summarizer_prompt, get_new_geography_and_climate_prompts, get_new_main_storyline_prompts, get_new_starting_city_prompts, get_new_world_lore_prompts, get_gm_response_prompts, get_world_description_summary_prompt
-from src.GPTController import GPTController, count_messages_tokens
+from src.gpt_controller import GPTController, count_messages_tokens
 import json
 import src.gm_tools as gm_tools
 from typing import List
@@ -20,7 +23,7 @@ class SessionState():
         self.messages_start_index = 1 # 0 is always included (system prompt)
         self.msgs_summaries = []
         self.user_turn = user_turn
-        self.campaign_intro_img_url = None
+        self.campaign_intro_img_b64str = None
     
     def get_msgs_summaries_prompt(self):
         summaries_prompt = "EARLIER CAMPAIGN SUMMARIES:\n"
@@ -70,9 +73,14 @@ class SessionState():
             print('creating world image...')
             img_prompt = get_image_world_creation_prompt(self.campaign_notes)
             img_response = await gpt_controller.send_img_query(img_prompt)
-            self.campaign_intro_img_url = img_response['url']
-            # store image in the heroku postgres db
-            # image_id = 
+            print('img prompt:', img_prompt)
+            print('revised_prompt', img_response['revised_prompt'])
+            image_data = base64.b64decode(img_response['b64_json'])
+            image_buffer = io.BytesIO(image_data) # file-like object
+            optimized_buffer = io.BytesIO()
+            image = Image.open(image_buffer)
+            image.save(optimized_buffer, format='PNG', optimize=True)
+            self.campaign_intro_img_b64str = base64.b64encode(optimized_buffer.getvalue()).decode('utf-8')
             img_cost = img_response['cost']
         elif len(self.messages) == 10:
             print('creating starting city...')
@@ -161,8 +169,7 @@ class SessionState():
                     resume_content += f'Player: {content}\n'
                 elif role == 'tool':
                     resume_content += f'Tool: {content}\n'
-            print('resume content: ', resume_content)
-
+            # print('resume content: ', resume_content)
             summarizer_prompt_msgs = get_summarizer_prompt(resume_content)
             query_response = await gpt_controller.send_query(summarizer_prompt_msgs, None)
             summary_msg_content = query_response['message'].content + '\n'
@@ -221,6 +228,11 @@ def exec_tool_function(function_call_data, campaign_notes: CampaignNotes, player
             return f'Error: missing required argument {arg_name} for tool {function_name}.\n'
         if type(tool_args[arg_name]) != arg_type:
             return f'Error: invalid type for argument {arg_name} in tool {function_name}.\n'
-
+    ##### debugging
+    # exception process_input CampaignNotes.create_new_main_storyline() got an unexpected keyword argument 'possible_developments'
+    # waiting for another unexpected keyword argument
+    print('tool args: ', tool_args)
+    print('f_data[arg_ref].items()', f_data['arg_ref'].items())
+    ######
     f_result = f_data['function'](**tool_args)
     return f_result
