@@ -53,7 +53,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-db_manager = DBManager(os.environ['DATABASE_URL'])
+database_uri = os.getenv("DATABASE_URL")  # or other relevant config var
+if database_uri.startswith("postgres://"):
+    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+db_manager = DBManager(database_uri)
 gpt_controller = GPTController(os.getenv('OPENAI_API_KEY'))
 session_manager = SessionManager()
 
