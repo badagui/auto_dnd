@@ -60,7 +60,7 @@ def credits_task():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler.add_job(credits_task, 'interval', minutes=1)
+    scheduler.add_job(credits_task, 'interval', minutes=60)
     scheduler.start()
     yield
 
