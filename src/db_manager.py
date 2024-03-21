@@ -112,19 +112,19 @@ class DBManager():
         with Session(self.engine) as session:
             cron_timer = session.exec(select(CronjobTimers).where(CronjobTimers.name == 'credits_giveaway_job')).first()
             if not cron_timer:
-                print('creating new credits_giveaway_job')
+                print('check_and_giveaway_credits: creating new credits_giveaway_job')
                 cron_timer = CronjobTimers(name='credits_giveaway_job')
                 session.add(cron_timer)
                 session.commit()
                 session.refresh(cron_timer)
             delta_time = datetime.now(UTC) - cron_timer.last_update.replace(tzinfo=UTC)
             delta_days = delta_time.total_seconds() / 60 / 60 / 24
-            users = session.exec(select(User).where(User.credits < 1000)).all()
+            print('check_and_giveaway_credits: delta_days is', delta_days, 'last_update is', cron_timer.last_update, 'now is', datetime.now(UTC))
             if delta_days >= 1:
-                print('giving away credits')
-                # cron_timer.last_update = datetime.now(UTC)
+                print('check_and_giveaway_credits: enough time elapsed, giving away credits')
                 cron_timer.last_update = cron_timer.last_update + timedelta(days=1)
                 session.add(cron_timer)
+                users = session.exec(select(User).where(User.credits < 1000)).all()
                 for user in users:
                     if user.acc_type == 1:
                         user.credits += 500

@@ -11,6 +11,9 @@ import asyncio
 from src.firebase_auth import auth_user_token
 from dotenv import load_dotenv
 load_dotenv()
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.jobstores.base import JobLookupError
+from contextlib import asynccontextmanager
 
 # prevents asyncio errors on Windows
 if sys.platform == 'win32':
@@ -42,7 +45,26 @@ class LoadCampaignInput(BaseModel):
     user_token: str
     campaign_id: str
 
-app = FastAPI()
+
+database_uri = os.getenv("DATABASE_URL")  # or other relevant config var
+if database_uri.startswith("postgres://"):
+    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+
+db_manager = DBManager(database_uri)
+gpt_controller = GPTController(os.getenv('OPENAI_API_KEY'))
+session_manager = SessionManager()
+scheduler = AsyncIOScheduler()
+
+def credits_task():
+    db_manager.check_and_giveaway_credits()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.add_job(credits_task, 'interval', minutes=1)
+    scheduler.start()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 # todo: implement CORS properly
 app.add_middleware(
@@ -52,13 +74,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-database_uri = os.getenv("DATABASE_URL")  # or other relevant config var
-if database_uri.startswith("postgres://"):
-    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
-db_manager = DBManager(database_uri)
-gpt_controller = GPTController(os.getenv('OPENAI_API_KEY'))
-session_manager = SessionManager()
 
 @app.post("/fetch_campaigns/")
 async def fetch_campaigns(input: UserTokenInput):
