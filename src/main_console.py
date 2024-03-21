@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 import os
-from src.GPTController import GPTController
+from src.gpt_controller import GPTController
 from dotenv import load_dotenv
 from src.session_manager import SessionManager
 load_dotenv()
