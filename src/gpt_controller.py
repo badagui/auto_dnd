@@ -6,11 +6,13 @@ class GPTController:
         self.client = AsyncOpenAI(api_key=api_key)
     
     async def send_query(self, messages, tools_prompt, tool_choice=None):
-        model = "gpt-3.5-turbo-0125"
+        model = "gpt-4o-2024-05-13"
+        # model = "gpt-3.5-turbo-0125"
         # model = "gpt-4-turbo-preview"
         pricing = {
             "gpt-3.5-turbo-0125": [0.0005, 0.0015],
-            "gpt-4-turbo-preview": [0.01, 0.03]
+            "gpt-4-turbo-preview": [0.01, 0.03],
+            "gpt-4o-2024-05-13": [0.005, 0.015]
         }
         price = [pricing[model][0] if model in pricing else 0, 
             pricing[model][1] if model in pricing else 0]

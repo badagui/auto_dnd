@@ -96,7 +96,7 @@ async def fetch_campaigns(input: UserTokenInput):
                 "player_name": session_player_names[i],
                 "player_Level": session_player_levels[i]
             })
-        return {"user_campaigns":  user_sessions_info, "maintenance_mode": False}
+        return {"user_campaigns":  user_sessions_info, "maintenance_mode": False, "server version": "0.0.1"}
     except Exception as e:
         print('exception fetching user campaigns', e)
         raise HTTPException(status_code=500, detail="Internal server error")
